@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { mkdir, writeFile, rm } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, delimiter } from 'node:path'
 import { randomBytes } from 'node:crypto'
@@ -17,6 +17,8 @@ export const Config = z.object({
   timeoutMs: z.number().default(120000),
   maxChars: z.number().default(40000),
   spaceName: z.string().default('DSH 网页操作'),
+  autoInstall: z.boolean().default(true),
+  downloadProxy: z.string().default(''),
 })
 
 /** Locate the ego-browser executable: configured path, then PATH, then the known install location. */
@@ -30,24 +32,214 @@ function resolveBin(config) {
       if (existsSync(candidate)) return candidate
     }
   }
-  const home = process.env.USERPROFILE ?? process.env.HOME ?? ''
-  const known = join(home, '.local', 'share', 'ego', 'active_version_dir', 'ego-browser.exe')
-  return existsSync(known) ? known : null
+  return findInstalledBin()
 }
+
+const EGO_HOME_URL = 'https://lite.ego.app/'
 
 /** What to tell the user when the browser itself is missing — this is the plugin's only hard dependency. */
 const MISSING_EGO_HELP = [
-  '这台机器上还没装 ego lite，所以这个插件暂时没法用。请照下面三步做：',
-  '1. 打开 https://lite.ego.app/ 下载并安装 ego lite（Windows 直连下载：https://cdn.ego.app/setup/windows/x64/egoliteSetup.exe）',
-  '2. 启动 ego lite，**把首次引导（onboarding）走完**；想让它直接有登录态，可以在引导里选择从 Chrome 导入数据',
-  '3. 回到这里重新调用即可（ego-browser 会随引导写进 PATH，通常不用重启 DSH）',
+  '这台机器上还没装 ego lite，所以这个插件暂时没法用。',
+  '- 让 Agent 调 `ego_install`：会按你的系统和架构自动挑安装包、下载并静默安装（Windows 约 19MB，macOS 约 150MB）',
+  '- 或者把插件配置里的 autoInstall 打开（默认已开），缺浏览器时会自动装',
+  `- 手动装：${EGO_HOME_URL}`,
   '',
-  '如果已经装好但仍报这个错：把 ego-browser.exe 的绝对路径填进插件配置的 egoBin，或确认它在 PATH 里。',
+  '装完只剩一步需要你本人：打开 ego lite 走完首次引导（onboarding）；想让它直接带登录态，引导里可以选从 Chrome 导入数据。',
+  '',
+  '如果已经装好但仍报这个错：把 ego-browser 的绝对路径填进插件配置的 egoBin，或确认它在 PATH 里。',
 ].join('\n')
+
+/** 官方 CDN 按「系统-架构」分目录；Linux 目前没有官方包。 */
+const EGO_SOURCES = {
+  'win32-x64': { url: 'https://cdn.ego.app/setup/windows/x64/egoliteSetup.exe', kind: 'exe' },
+  'win32-arm64': { url: 'https://cdn.ego.app/setup/windows/arm64/egoliteSetup.exe', kind: 'exe' },
+  'darwin-arm64': { url: 'https://cdn.ego.app/setup/macos/arm64/egolite.dmg', kind: 'dmg' },
+  'darwin-x64': { url: 'https://cdn.ego.app/setup/macos/x64/egolite.dmg', kind: 'dmg' },
+}
+
+const EGO_PROGRAM_DIRS = [
+  join(process.env.ProgramFiles ?? 'C:\\Program Files', 'Citro Labs', 'ego lite', 'Application'),
+  join(process.env['ProgramFiles(x86)'] ?? 'C:\\Program Files (x86)', 'Citro Labs', 'ego lite', 'Application'),
+]
+
+const MAC_APP_DIRS = [
+  '/Applications/ego lite.app',
+  join(process.env.HOME ?? '', 'Applications', 'ego lite.app'),
+]
+
+/** 当前系统的安装包；不支持的平台直接给出人话错误。 */
+function egoSource() {
+  const key = `${process.platform}-${process.arch}`
+  const source = EGO_SOURCES[key]
+  if (!source) throw new Error(`这台机器（${key}）没有官方安装包，请手动安装：${EGO_HOME_URL}`)
+  return { key, ...source }
+}
+
+/** 在目录里按文件名深度优先找文件（macOS 的 .app 内部结构会变，不写死路径）。 */
+function findFile(root, name, depth = 4) {
+  if (depth < 0) return null
+  let entries = []
+  try {
+    entries = readdirSync(root, { withFileTypes: true })
+  } catch {
+    return null
+  }
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name === name) return join(root, entry.name)
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue
+    const hit = findFile(join(root, entry.name), name, depth - 1)
+    if (hit) return hit
+  }
+  return null
+}
+
+/** 版本号就是可执行文件所在目录的名字（shim 场景会拿到 active_version_dir，可接受）。 */
+function versionOf(bin) {
+  return bin.split(/[\\/]/).slice(-2, -1)[0] || ''
+}
+
+/** 安装后的可执行文件：优先 shim，其次各平台的安装目录。 */
+function findInstalledBin() {
+  const home = process.env.USERPROFILE ?? process.env.HOME ?? ''
+  const exe = process.platform === 'win32' ? 'ego-browser.exe' : 'ego-browser'
+  const shim = join(home, '.local', 'share', 'ego', 'active_version_dir', exe)
+  if (existsSync(shim)) return shim
+
+  if (process.platform === 'win32') {
+    for (const base of EGO_PROGRAM_DIRS) {
+      if (!existsSync(base)) continue
+      let versions = []
+      try {
+        versions = readdirSync(base)
+      } catch {
+        continue
+      }
+      versions.sort().reverse()
+      for (const version of versions) {
+        const candidate = join(base, version, 'ego-browser.exe')
+        if (existsSync(candidate)) return candidate
+      }
+    }
+  }
+
+  if (process.platform === 'darwin') {
+    for (const app of MAC_APP_DIRS) {
+      if (!existsSync(app)) continue
+      const hit = findFile(app, 'ego-browser', 5)
+      if (hit) return hit
+    }
+  }
+
+  return null
+}
+
+/** 跑一个子进程并收齐输出；下载/安装这类长任务都走它。 */
+function runProcess(bin, args, timeoutMs = 900000) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(bin, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+    let out = ''
+    let err = ''
+    const timer = setTimeout(() => {
+      try { child.kill() } catch {}
+      reject(new Error(`${bin} 超时（${timeoutMs}ms）`))
+    }, timeoutMs)
+    child.stdout.on('data', (chunk) => { out += String(chunk) })
+    child.stderr.on('data', (chunk) => { err += String(chunk) })
+    child.on('error', (error) => { clearTimeout(timer); reject(error) })
+    child.on('close', (code) => {
+      clearTimeout(timer)
+      if (code === 0) resolve({ out, err })
+      else reject(new Error(String(err || out).trim().slice(-800) || `${bin} exit ${code}`))
+    })
+  })
+}
+
+/** 用系统自带能力下载：Windows 走 PowerShell（可带代理），macOS/Linux 走 curl。 */
+async function downloadFile(url, dest, config) {
+  if (process.platform === 'win32') {
+    const proxyArg = config.downloadProxy ? ` -Proxy '${config.downloadProxy}'` : ''
+    const script = [
+      "$ErrorActionPreference='Stop'",
+      '[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12',
+      `Invoke-WebRequest -Uri '${url}' -OutFile '${dest}' -UseBasicParsing${proxyArg}`,
+      `(Get-Item '${dest}').Length`,
+    ].join('; ')
+    const { out } = await runProcess('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script], 1800000)
+    return Number(String(out).trim().split(/\s+/).pop()) || 0
+  }
+  const args = ['-fL', '--max-time', '1800', '-o', dest]
+  if (config.downloadProxy) args.push('-x', config.downloadProxy)
+  args.push(url)
+  await runProcess('curl', args, 1800000)
+  try {
+    return statSync(dest).size
+  } catch {
+    return 0
+  }
+}
+
+/** macOS：挂载 dmg，把 .app 拷进 /Applications，再卸载。 */
+async function installMacDmg(file) {
+  const mount = join(tmpdir(), `dsh-ego-mnt-${randomBytes(3).toString('hex')}`)
+  await mkdir(mount, { recursive: true })
+  await runProcess('hdiutil', ['attach', '-nobrowse', '-quiet', '-mountpoint', mount, file], 300000)
+  try {
+    let entries = []
+    try {
+      entries = readdirSync(mount)
+    } catch {}
+    const app = entries.find((name) => name.endsWith('.app'))
+    if (!app) throw new Error('安装镜像里没找到 .app')
+    const target = join('/Applications', app)
+    if (existsSync(target)) await runProcess('rm', ['-rf', target], 300000)
+    await runProcess('cp', ['-R', join(mount, app), target], 900000)
+  } finally {
+    await runProcess('hdiutil', ['detach', mount, '-quiet'], 120000).catch(() => {})
+  }
+}
+
+/** 按当前系统下载并静默安装 ego lite，返回装出来的可执行文件路径。 */
+async function installEgo(config) {
+  const source = egoSource()
+  const dir = join(tmpdir(), `dsh-ego-setup-${randomBytes(4).toString('hex')}`)
+  await mkdir(dir, { recursive: true })
+  const file = join(dir, source.kind === 'dmg' ? 'egolite.dmg' : 'egoliteSetup.exe')
+
+  let bytes = 0
+  try {
+    bytes = await downloadFile(source.url, file, config)
+  } catch (error) {
+    throw new Error(`下载 ego lite 安装包失败（${source.url}）：${error.message}\n可以配好 downloadProxy 再试，或手动安装：${EGO_HOME_URL}`)
+  }
+
+  if (source.kind === 'dmg') {
+    await installMacDmg(file)
+  } else {
+    await new Promise((resolve, reject) => {
+      const child = spawn(file, ['/S'], { windowsHide: true, stdio: 'ignore' })
+      child.on('error', reject)
+      child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`安装程序退出码 ${code}（可能需要管理员权限）`))))
+    })
+  }
+
+  const deadline = Date.now() + 180000
+  while (Date.now() < deadline) {
+    const bin = findInstalledBin()
+    if (bin) {
+      try { await rm(dir, { recursive: true, force: true }) } catch {}
+      return { bin, version: versionOf(bin), bytes, platform: source.key }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 3000))
+  }
+  throw new Error('安装程序已执行，但没找到 ego-browser。请手动打开 ego lite 完成首次引导后再试。')
+}
 
 /** Run one browser script through `ego-browser nodejs` and return the value it reports. */
 async function runEgo(code, config, options = {}) {
-  const bin = resolveBin(config)
+  let bin = resolveBin(config)
+  if (!bin && config.autoInstall) bin = (await installEgo(config)).bin
   if (!bin) throw new Error(MISSING_EGO_HELP)
   const dir = join(tmpdir(), `dsh-ego-${randomBytes(5).toString('hex')}`)
   await mkdir(dir, { recursive: true })
@@ -452,6 +644,44 @@ await task.finish({ keep: CFG.keep || [] });
 console.log(CFG.marker + JSON.stringify({ spaceId: CFG.spaceId, closed: true }));
 `
       return runEgo(code, config, { vars: { spaceId: args.spaceId, keep: args.keep ?? [] } })
+    },
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'ego_install',
+    description: [
+      '按当前系统和架构自动选择官方安装包并静默安装 ego lite（Windows 约 19MB，macOS 约 150MB），返回 ego-browser 的路径。',
+      '系统不支持（如 Linux）时会直接说明并给出手动下载地址。',
+      '装完只剩首次引导（onboarding）需要用户本人点头，其它步骤都不需要用户参与。',
+    ].join('\n'),
+    parameters: {
+      reinstall: { type: 'boolean', description: '为 true 时即使已经装好也重新下载安装（默认只在缺失时使用）。' },
+    },
+    output: {
+      schema: {
+        type: 'object',
+        additionalProperties: true,
+        properties: {
+          installed: { type: 'boolean', required: true },
+          bin: { type: 'string', required: true, description: 'ego-browser.exe 的绝对路径。' },
+          version: { type: 'string', description: '安装到的 ego lite 版本。' },
+          bytes: { type: 'integer', description: '下载的安装包字节数。' },
+        },
+      },
+      render: (_args, value) => [{
+        type: 'text',
+        text: `ego lite ${value.version ?? ''} 已安装 → ${value.bin}\n还需要你本人打开 ego lite 走完首次引导（onboarding），之后就能用了。`,
+      }],
+    },
+    presentCall: () => ({ card: 'generic', title: 'ego install', kind: 'other' }),
+    presentResult: (_args, result) => ({ card: 'generic', title: result.isError ? 'ego install failed' : 'ego install', content: result.content }),
+    async execute(args) {
+      if (!args.reinstall) {
+        const existing = resolveBin(config) ?? findInstalledBin()
+        if (existing) return { installed: true, bin: existing, version: existing.split(/[\\/]/).slice(-2, -1)[0] }
+      }
+      const result = await installEgo(config)
+      return { installed: true, ...result }
     },
   }))
 }

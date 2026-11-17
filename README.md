@@ -23,6 +23,18 @@ https://hbycwzm001.github.io/dsh-plugin-ego/market/index.json
 （jsDelivr 对 `@main` 有缓存，刚推完可能还是旧内容；`raw.githubusercontent.com` 在国内需代理。）
 添加完搜 `dsh-plugin-ego` 就能一键装。
 
+## 发布（维护者用）
+
+```powershell
+# 改完代码，一条命令发布：提交 → 推送 → 索引重钉 → 等 Pages 生效
+.\release.ps1 -Message "feat: 支持 xx"
+
+# 升版本号 + 打 GitHub Release
+.\release.ps1 -Message "feat: v0.2" -Bump minor -Release
+```
+
+脚本会：提交工作区改动 → 推 `main` → 用新 commit 重建 `market/index.json` → 校验 → 再提交推送 → 轮询 Pages 直到线上索引的 sha 与本次 commit 一致，最后打印索引地址和安装 spec。
+
 ## 工具
 
 | 工具 | 作用 |
@@ -31,23 +43,28 @@ https://hbycwzm001.github.io/dsh-plugin-ego/market/index.json
 | `ego_read` | 读页面：`snapshot`（无障碍树）、`text`（正文）、`html`、或 `script`（页面内执行 JS 取值） |
 | `ego_act` | 按顺序执行最多 20 步：`goto`/`click`/`fill`/`press`/`type`/`scroll`/`wait`/`waitFor`/`select`/`screenshot`/`eval` |
 | `ego_fetch` | 用当前页面的 cookies 与代理发请求；给 `saveAs` 时直接落盘（下载视频、图片、PDF） |
+| `ego_install` | 按系统/架构下载并静默安装 ego lite（已装好则直接返回路径） |
 | `ego_close` | 结束任务空间；`keep` 留页面给用户看 |
 
 连续操作同一个页面时，把 `ego_open` / `ego_act` 返回的 `spaceId`（以及 `page`）传回来即可复用。
 
-## 依赖
+## 依赖（会自动装）
 
-这个插件不替用户装软件：**没装 ego lite 时，第一次调用任何工具都会直接返回下载地址和下面三步指引**，照着做就行。
+ego lite 是唯一的外部依赖，插件会**自己搞定**：缺浏览器时按 `process.platform` + `process.arch` 选官方安装包（Windows 19MB / macOS 150MB），下载并静默安装，装完自动定位可执行文件。
 
-1. 安装 [ego lite](https://lite.ego.app/)（Chromium 版本，Agent 通过 `ego-browser` CLI 驱动它）。
-2. **完整走完首次启动的引导（onboarding）**，否则每次调用都会返回「还没完成首次引导」的提示。
-3. `ego-browser` 在 PATH 里，或者在配置里写死 `egoBin` 的绝对路径。
+- 默认 `autoInstall: true`：第一次调用工具发现没装，就会自动装好再继续，不用人管；
+- 也可以显式让 Agent 调 `ego_install`（或 `ego_install {reinstall:true}` 覆盖重装）；
+- Linux 官方没有包，会直接说明并给出手动地址。
+
+**只剩一步需要用户本人**：装好后打开 ego lite，**走完首次引导（onboarding）**；想让它直接带登录态，引导里可以选从 Chrome 导入数据。引导没走完时，任何调用都会返回中文提示而不是一堆报错。
 
 ## 配置
 
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
-| `egoBin` | `""` | `ego-browser.exe` 的绝对路径；留空则依次查 PATH、`~/.local/share/ego/active_version_dir/` |
+| `egoBin` | `""` | `ego-browser` 的绝对路径；留空则依次查 PATH、`~/.local/share/ego/active_version_dir/`、各平台安装目录 |
+| `autoInstall` | `true` | 缺浏览器时自动下载安装（关掉就只提示、不下载） |
+| `downloadProxy` | `""` | 下载安装包时用的代理，例如 `http://127.0.0.1:10809`（`cdn.ego.app` 直连不通时用） |
 | `timeoutMs` | `120000` | 单次调用（含页面加载）的上限 |
 | `maxChars` | `40000` | 快照/正文/HTML 返回给模型时的截断长度 |
 | `spaceName` | `DSH 网页操作` | 新建任务空间时用的名字 |

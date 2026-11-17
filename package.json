@@ -1,70 +1,70 @@
 {
-  "name": "dsh-plugin-ego",
-  "version": "0.1.0",
-  "description": "Drive the ego lite Chromium browser from DSH: open pages, read them, click and type, and download files with the user's real logins.",
-  "icon": "icon.svg",
-  "type": "module",
-  "main": "./index.js",
-  "exports": {
-    ".": "./index.js",
-    "./package.json": "./package.json",
-    "./locale/*.json": "./locale/*.json"
-  },
-  "files": [
-    "index.js",
-    "cordis.patch.yml",
-    "icon.svg",
-    "README.md",
-    "locale/*.json"
-  ],
-  "engines": {
-    "node": ">=22",
-    "dsh": ">=0.2.2-rc.1"
-  },
-  "dsh": {
-    "bundle": {
-      "patch": "./cordis.patch.yml"
-    },
-    "compatibility": {
-      "dshReleases": {
-        "0.2.2-rc.1+": "compatible",
-        "0.2.2-rc.3+": "compatible"
-      }
-    }
-  },
-  "keywords": [
-    "deepseek-harness",
-    "dsh",
-    "cordis-plugin",
-    "browser",
-    "ego",
-    "automation"
-  ],
-  "author": "hbycwzm001",
-  "homepage": "https://github.com/hbycwzm001/dsh-plugin-ego#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/hbycwzm001/dsh-plugin-ego.git"
-  },
-  "bugs": {
-    "url": "https://github.com/hbycwzm001/dsh-plugin-ego/issues"
-  },
-  "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-tools": ">=0.2.0-rc.2",
-    "@deepseek-ai/schemastery": "^3.18.0"
-  },
-  "peerDependenciesMeta": {
-    "@deepseek-ai/cordis": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-tools": {
-      "optional": true
-    },
-    "@deepseek-ai/schemastery": {
-      "optional": true
-    }
-  },
-  "license": "MIT",
-  "private": true
+    "name":  "dsh-plugin-ego",
+    "version":  "0.2.0",
+    "description":  "Drive the ego lite Chromium browser from DSH: open pages, read them, click and type, and download files with the user\u0027s real logins.",
+    "icon":  "icon.svg",
+    "type":  "module",
+    "main":  "./index.js",
+    "exports":  {
+                    ".":  "./index.js",
+                    "./package.json":  "./package.json",
+                    "./locale/*.json":  "./locale/*.json"
+                },
+    "files":  [
+                  "index.js",
+                  "cordis.patch.yml",
+                  "icon.svg",
+                  "README.md",
+                  "locale/*.json"
+              ],
+    "engines":  {
+                    "node":  "\u003e=22",
+                    "dsh":  "\u003e=0.2.2-rc.1"
+                },
+    "dsh":  {
+                "bundle":  {
+                               "patch":  "./cordis.patch.yml"
+                           },
+                "compatibility":  {
+                                      "dshReleases":  {
+                                                          "0.2.2-rc.1+":  "compatible",
+                                                          "0.2.2-rc.3+":  "compatible"
+                                                      }
+                                  }
+            },
+    "keywords":  [
+                     "deepseek-harness",
+                     "dsh",
+                     "cordis-plugin",
+                     "browser",
+                     "ego",
+                     "automation"
+                 ],
+    "author":  "hbycwzm001",
+    "homepage":  "https://github.com/hbycwzm001/dsh-plugin-ego#readme",
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/hbycwzm001/dsh-plugin-ego.git"
+                   },
+    "bugs":  {
+                 "url":  "https://github.com/hbycwzm001/dsh-plugin-ego/issues"
+             },
+    "peerDependencies":  {
+                             "@deepseek-ai/cordis":  "^4.0.2",
+                             "@deepseek-ai/dsh-tools":  "\u003e=0.2.0-rc.2",
+                             "@deepseek-ai/schemastery":  "^3.18.0"
+                         },
+    "peerDependenciesMeta":  {
+                                 "@deepseek-ai/cordis":  {
+                                                             "optional":  true
+                                                         },
+                                 "@deepseek-ai/dsh-tools":  {
+                                                                "optional":  true
+                                                            },
+                                 "@deepseek-ai/schemastery":  {
+                                                                  "optional":  true
+                                                              }
+                             },
+    "license":  "MIT",
+    "private":  true
 }

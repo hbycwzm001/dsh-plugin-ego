@@ -3,6 +3,8 @@
       name: dsh-plugin-ego
       config:
         egoBin: ""
+        autoInstall: true
+        downloadProxy: ""
         timeoutMs: 120000
         maxChars: 40000
         spaceName: DSH 网页操作
