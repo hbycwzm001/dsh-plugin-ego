@@ -109,22 +109,34 @@ if (git diff --cached --name-only) {
   Info '索引没变化'
 }
 
-# 4. 等 Pages 生效
+# 4. 等 Pages 生效（用 node 探测：PS 5.1 的 Invoke-RestMethod 对 github.io 会卡在超时）
 if (-not $SkipWait) {
   Info "等待 GitHub Pages 生效：$indexUrl"
+  $probe = Join-Path $env:TEMP "dsh-pages-probe-$PID.mjs"
+  @'
+const [url, want] = process.argv.slice(2)
+const full = `${url}?t=${Date.now()}`
+try {
+  const r = await fetch(full, { signal: AbortSignal.timeout(15000) })
+  if (!r.ok) { console.log(`HTTP ${r.status}`); process.exit(1) }
+  const j = await r.json()
+  const sha = j?.plugins?.[0]?.versions?.[0]?.source?.commit ?? ''
+  console.log(sha)
+  process.exit(sha === want ? 0 : 2)
+} catch (e) {
+  console.log(e.cause?.code || e.name)
+  process.exit(1)
+}
+'@ | Write-Utf8NoBom $probe $_
   $ok = $false
-  for ($i = 1; $i -le 24; $i++) {
-    Start-Sleep -Seconds 10
-    try {
-      $live = Invoke-RestMethod -Uri $indexUrl -TimeoutSec 20
-      $liveSha = $live.plugins[0].versions[0].source.commit
-      if ($liveSha -eq $sha) { $ok = $true; Info "已生效（第 $i 次探测，约 $($i * 10) 秒）"; break }
-      Write-Host "    第 $i 次：线上还是 $($liveSha.Substring(0,7))，继续等"
-    } catch {
-      Write-Host "    第 $i 次：$($_.Exception.Message)"
-    }
+  for ($i = 1; $i -le 30; $i++) {
+    Start-Sleep -Seconds 8
+    $live = & $node $probe $indexUrl $sha 2>&1
+    if ($LASTEXITCODE -eq 0) { $ok = $true; Info "已生效（第 $i 次探测，约 $($i * 8) 秒）"; break }
+    Write-Host "    第 $i 次：$live"
   }
-  if (-not $ok) { Warn "等了 4 分钟还没刷新，稍后再访问：$indexUrl" }
+  Remove-Item $probe -Force -ErrorAction SilentlyContinue
+  if (-not $ok) { Warn "等了约 4 分钟还没刷新，稍后再访问：$indexUrl" }
 }
 
 # 5. 可选：发 GitHub Release
