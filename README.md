@@ -2,6 +2,25 @@
 
 把本机 **ego lite** 浏览器接成 DSH 的全局工具。它跑的是真正的 Chromium，带用户的登录态与代理设置，所以适合需要登录、有人机校验或反爬的站点——这些正是内置 HTTP 抓取做不到的。
 
+## 安装
+
+在 DSH 里让 Agent 安装（底层是 `plugin_manager install_bundle`），`target` 三选一：
+
+| target | 说明 |
+| --- | --- |
+| `git+https://github.com/hbycwzm001/dsh-plugin-ego.git#a2d74bc5bae775cff8deaf706b1a31fc580f4276` | 从 GitHub 装，不用 npm；本机需要能访问 github.com |
+| `F:\path\to\dsh-plugin-ego` | 本地目录（开发时用，pnpm link，改代码重载即可） |
+| `dsh-plugin-ego@0.1.0` | 发布到 npm 之后可用 |
+
+**走插件市场**：在「插件 → 发现 → 添加索引源」里粘贴
+
+```
+https://gcore.jsdelivr.net/gh/hbycwzm001/dsh-plugin-ego@main/market/index.json
+```
+
+（`gcore` / `fastly` 这两个 jsDelivr 镜像国内可直连；`raw.githubusercontent.com` 在国内需要代理。）
+添加完搜 `dsh-plugin-ego` 就能一键装。
+
 ## 工具
 
 | 工具 | 作用 |

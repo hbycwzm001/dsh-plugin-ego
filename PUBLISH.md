@@ -2,6 +2,22 @@
 
 包本体：`index.js`、`cordis.patch.yml`、`package.json`、`icon.svg`、`README.md`、`locale/{zh,en}.json`，约 26KB。
 
+**当前状态（已发布）**
+
+| 项 | 值 |
+| --- | --- |
+| 仓库 | <https://github.com/hbycwzm001/dsh-plugin-ego>（public） |
+| 索引 | <https://gcore.jsdelivr.net/gh/hbycwzm001/dsh-plugin-ego@main/market/index.json> |
+| 备用索引 | <https://fastly.jsdelivr.net/gh/hbycwzm001/dsh-plugin-ego@main/market/index.json>（raw.githubusercontent 国内需代理） |
+| 源类型 | `git`，钉在 `a2d74bc5bae775cff8deaf706b1a31fc580f4276`（= v0.1.0 代码） |
+| 安装 spec | `git+https://github.com/hbycwzm001/dsh-plugin-ego.git#a2d74bc5bae775cff8deaf706b1a31fc580f4276` |
+
+已实测：`pnpm add <上面的 spec>` 成功（6.4s，`+ dsh-plugin-ego 0.1.0`）；两个 jsDelivr 镜像在**不开代理**时也能直连拿到索引（200 / format=1）。
+
+剩下只有一步，**必须你在界面里做**：插件 → 发现 → 添加索引源 → 粘贴上面的索引 URL。
+
+---
+
 三条路，从轻到重。
 
 ---
