@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { mkdir, writeFile, rm } from 'node:fs/promises'
-import { existsSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, realpathSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, delimiter } from 'node:path'
 import { randomBytes } from 'node:crypto'
@@ -95,9 +95,14 @@ function findFile(root, name, depth = 4) {
   return null
 }
 
-/** 版本号就是可执行文件所在目录的名字（shim 场景会拿到 active_version_dir，可接受）。 */
+/** 版本号就是可执行文件所在目录的名字；shim 目录要顺着链接找回真实版本目录。 */
 function versionOf(bin) {
-  return bin.split(/[\\/]/).slice(-2, -1)[0] || ''
+  let real = bin
+  try {
+    real = realpathSync(bin)
+  } catch {}
+  const dir = real.split(/[\\/]/).slice(-2, -1)[0] ?? ''
+  return dir === 'active_version_dir' ? '' : dir
 }
 
 /** 安装后的可执行文件：优先 shim，其次各平台的安装目录。 */
@@ -701,7 +706,7 @@ console.log(CFG.marker + JSON.stringify({ spaceId: CFG.spaceId, closed: true }))
     async execute(args) {
       if (!args.reinstall) {
         const existing = resolveBin(config) ?? findInstalledBin()
-        if (existing) return { installed: true, bin: existing, version: existing.split(/[\\/]/).slice(-2, -1)[0] }
+        if (existing) return { installed: true, bin: existing, version: versionOf(existing) }
       }
       const result = await installEgo(config)
       return { installed: true, ...result }
