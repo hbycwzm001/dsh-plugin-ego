@@ -1,6 +1,8 @@
 // 生成 format 1 的插件市场索引，并用 DSH 官方校验器验证。
-// 用法：node build-index.mjs ["https://github.com/<you>/dsh-plugin-ego"]
-// 第二个参数（可选）是仓库地址；不给就用 package.json 的 repository 字段。
+// 用法：
+//   node build-index.mjs                          → npm 源，仓库地址取 package.json
+//   node build-index.mjs <repoUrl>                → npm 源，指定仓库地址
+//   node build-index.mjs <repoUrl> <commitSha>    → git 源，钉到某个 40 位 commit（不用发 npm）
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -10,7 +12,17 @@ const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 const iconSvg = readFileSync(join(root, pkg.icon ?? 'icon.svg'))
-const repoUrl = process.argv[2] ?? pkg.repository?.url ?? 'https://github.com/REPLACE-ME/dsh-plugin-ego'
+const repoUrl =
+  process.argv[2] ?? pkg.repository?.url?.replace(/^git\+/, '').replace(/\.git$/, '') ?? 'https://github.com/REPLACE-ME/dsh-plugin-ego'
+const commitSha = process.argv[3]
+
+if (commitSha && !/^[0-9a-f]{40}$/.test(commitSha)) {
+  console.error(`commit 必须是 40 位小写 hex，收到：${commitSha}`)
+  process.exit(1)
+}
+
+/** npm 源直接用版本号；git 源必须钉死 commit。 */
+const source = commitSha ? { type: 'git', url: repoUrl, commit: commitSha } : { type: 'npm' }
 
 /** 版本发布时间（Unix 秒）。CI 里建议改成 npm registry 返回的 time[version]，这里取当前时间。 */
 const publishTimestamp = Math.floor(Date.now() / 1000)
@@ -51,7 +63,7 @@ const index = {
         {
           version: pkg.version,
           publishTimestamp,
-          source: { type: 'npm' },
+          source,
           engines: { dsh: pkg.engines?.dsh ?? '>=0.2.2-rc.1' },
         },
       ],
