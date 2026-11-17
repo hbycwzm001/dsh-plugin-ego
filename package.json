@@ -1,6 +1,6 @@
 {
     "name":  "dsh-plugin-ego",
-    "version":  "0.2.0",
+    "version":  "0.2.1",
     "description":  "Drive the ego lite Chromium browser from DSH: open pages, read them, click and type, and download files with the user\u0027s real logins.",
     "icon":  "icon.svg",
     "type":  "module",

@@ -200,6 +200,25 @@ async function installMacDmg(file) {
   }
 }
 
+/** 启动刚装好的 ego lite，让首次引导窗口自己弹出来，省得用户去找图标。 */
+function launchInstalledApp() {
+  try {
+    if (process.platform === 'win32') {
+      const base = process.env.ProgramFiles ?? 'C:\\Program Files'
+      const exe = join(base, 'Citro Labs', 'ego lite', 'Application', 'ego.exe')
+      if (existsSync(exe)) {
+        spawn(exe, [], { detached: true, stdio: 'ignore' }).unref()
+        return true
+      }
+    }
+    if (process.platform === 'darwin') {
+      spawn('open', ['-a', 'ego lite'], { detached: true, stdio: 'ignore' }).unref()
+      return true
+    }
+  } catch {}
+  return false
+}
+
 /** 按当前系统下载并静默安装 ego lite，返回装出来的可执行文件路径。 */
 async function installEgo(config) {
   const source = egoSource()
@@ -229,7 +248,8 @@ async function installEgo(config) {
     const bin = findInstalledBin()
     if (bin) {
       try { await rm(dir, { recursive: true, force: true }) } catch {}
-      return { bin, version: versionOf(bin), bytes, platform: source.key }
+      const launched = launchInstalledApp()
+      return { bin, version: versionOf(bin), bytes, platform: source.key, fresh: true, launched }
     }
     await new Promise((resolve) => setTimeout(resolve, 3000))
   }
@@ -286,7 +306,8 @@ async function runEgo(code, config, options = {}) {
     if (!line) {
       const message = (stderr || stdout).trim().slice(-1200)
       if (/onboarding/i.test(message)) {
-        throw new Error(`ego lite 还没完成首次引导：请在弹出的 ego lite 引导窗口里走完流程后重试。原始输出：${message}`)
+        const launched = launchInstalledApp()
+        throw new Error(`ego lite 还没完成首次引导（onboarding）。${launched ? '已经帮你把 ego lite 启动了，' : ''}在那个窗口里走完引导即可，之后不用再管。原始输出：${message}`)
       }
       throw new Error(`ego-browser 没有返回结果（exit ${exitCode}）：${message || '无输出'}`)
     }
@@ -670,7 +691,9 @@ console.log(CFG.marker + JSON.stringify({ spaceId: CFG.spaceId, closed: true }))
       },
       render: (_args, value) => [{
         type: 'text',
-        text: `ego lite ${value.version ?? ''} 已安装 → ${value.bin}\n还需要你本人打开 ego lite 走完首次引导（onboarding），之后就能用了。`,
+        text: value.fresh
+          ? `ego lite ${value.version ?? ''} 已装好 → ${value.bin}\n${value.launched ? '已自动启动 ego lite，' : ''}只剩首次引导（onboarding）需要你点一下，走完就不用再管了。`
+          : `ego lite 已在位 → ${value.bin}${value.version ? `（${value.version}）` : ''}`,
       }],
     },
     presentCall: () => ({ card: 'generic', title: 'ego install', kind: 'other' }),
