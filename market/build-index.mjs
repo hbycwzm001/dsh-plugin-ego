@@ -46,8 +46,8 @@ const index = {
       name: pkg.name,
       title: { en: 'Ego Browser Tools', zh: 'Ego 浏览器工具' },
       description: {
-        en: 'Open, read, act on and download from sites inside the ego lite browser — including sites that need login or trip bot checks.',
-        zh: '在 ego lite 里打开、读取、操作页面并下载文件，需要登录或有反爬的站点也能用。',
+        en: 'Open, read, act on and download from sites inside the ego lite browser — including sites that need login or trip bot checks. Requires ego lite to be installed first.',
+        zh: '在 ego lite 里打开、读取、操作页面并下载文件，需要登录或有反爬的站点也能用。需先安装 ego lite 浏览器。',
       },
       icon: `data:image/svg+xml;base64,${iconSvg.toString('base64')}`,
       author: pkg.author ?? 'you',

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "Ego browser (dsh-plugin-ego)",
-    "description": "Expose the ego lite browser as global tools: open pages, read them, click and type, and download files with the user's real logins.",
+    "description": "Expose the ego lite browser as global tools: open pages, read them, click and type, and download files with the user's real logins. Requires ego lite to be installed first (https://lite.ego.app/).",
     "detail": "README.md"
   }
 }

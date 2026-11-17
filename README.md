@@ -35,6 +35,8 @@ https://gcore.jsdelivr.net/gh/hbycwzm001/dsh-plugin-ego@main/market/index.json
 
 ## 依赖
 
+这个插件不替用户装软件：**没装 ego lite 时，第一次调用任何工具都会直接返回下载地址和下面三步指引**，照着做就行。
+
 1. 安装 [ego lite](https://lite.ego.app/)（Chromium 版本，Agent 通过 `ego-browser` CLI 驱动它）。
 2. **完整走完首次启动的引导（onboarding）**，否则每次调用都会返回「还没完成首次引导」的提示。
 3. `ego-browser` 在 PATH 里，或者在配置里写死 `egoBin` 的绝对路径。

@@ -32,12 +32,23 @@ function resolveBin(config) {
   }
   const home = process.env.USERPROFILE ?? process.env.HOME ?? ''
   const known = join(home, '.local', 'share', 'ego', 'active_version_dir', 'ego-browser.exe')
-  return existsSync(known) ? known : 'ego-browser'
+  return existsSync(known) ? known : null
 }
+
+/** What to tell the user when the browser itself is missing — this is the plugin's only hard dependency. */
+const MISSING_EGO_HELP = [
+  '这台机器上还没装 ego lite，所以这个插件暂时没法用。请照下面三步做：',
+  '1. 打开 https://lite.ego.app/ 下载并安装 ego lite（Windows 直连下载：https://cdn.ego.app/setup/windows/x64/egoliteSetup.exe）',
+  '2. 启动 ego lite，**把首次引导（onboarding）走完**；想让它直接有登录态，可以在引导里选择从 Chrome 导入数据',
+  '3. 回到这里重新调用即可（ego-browser 会随引导写进 PATH，通常不用重启 DSH）',
+  '',
+  '如果已经装好但仍报这个错：把 ego-browser.exe 的绝对路径填进插件配置的 egoBin，或确认它在 PATH 里。',
+].join('\n')
 
 /** Run one browser script through `ego-browser nodejs` and return the value it reports. */
 async function runEgo(code, config, options = {}) {
   const bin = resolveBin(config)
+  if (!bin) throw new Error(MISSING_EGO_HELP)
   const dir = join(tmpdir(), `dsh-ego-${randomBytes(5).toString('hex')}`)
   await mkdir(dir, { recursive: true })
   const file = join(dir, 'task.mjs')
@@ -65,7 +76,11 @@ async function runEgo(code, config, options = {}) {
       }, timeout)
       child.stdout.on('data', (chunk) => { out += String(chunk) })
       child.stderr.on('data', (chunk) => { err += String(chunk) })
-      child.on('error', (error) => { clearTimeout(timer); reject(error) })
+      child.on('error', (error) => {
+        clearTimeout(timer)
+        if (error && error.code === 'ENOENT') reject(new Error(MISSING_EGO_HELP))
+        else reject(error)
+      })
       child.on('close', (exit) => { clearTimeout(timer); resolve({ stdout: out, stderr: err, code: exit }) })
     })
 
