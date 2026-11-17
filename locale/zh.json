@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Ego 浏览器 (dsh-plugin-ego)",
+    "description": "把 ego lite 浏览器接成全局工具：打开网页、读页面、点击输入、下载文件，全部走用户的真实登录态。",
+    "detail": "README.md"
+  }
+}

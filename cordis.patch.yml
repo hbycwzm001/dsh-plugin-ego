@@ -1,0 +1,8 @@
+- insert:
+    - id: ego-browser-tools
+      name: dsh-plugin-ego
+      config:
+        egoBin: ""
+        timeoutMs: 120000
+        maxChars: 40000
+        spaceName: DSH 网页操作

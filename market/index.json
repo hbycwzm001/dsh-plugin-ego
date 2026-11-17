@@ -1,0 +1,67 @@
+{
+  "format": 1,
+  "title": {
+    "en": "Ego Browser Tools",
+    "zh": "Ego 浏览器工具"
+  },
+  "description": {
+    "en": "Drive the ego lite browser from DSH: open pages with the user’s real logins, read them, act on them, and download files.",
+    "zh": "把 ego lite 浏览器接成 DSH 工具：用用户真实登录态打开、读取、操作页面并下载文件。"
+  },
+  "metadata": {
+    "categories": {
+      "browser": {
+        "title": {
+          "en": "Browser",
+          "zh": "浏览器"
+        }
+      }
+    },
+    "labels": {},
+    "sortKeys": {}
+  },
+  "plugins": [
+    {
+      "name": "dsh-plugin-ego",
+      "title": {
+        "en": "Ego Browser Tools",
+        "zh": "Ego 浏览器工具"
+      },
+      "description": {
+        "en": "Open, read, act on and download from sites inside the ego lite browser — including sites that need login or trip bot checks.",
+        "zh": "在 ego lite 里打开、读取、操作页面并下载文件，需要登录或有反爬的站点也能用。"
+      },
+      "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IkVnbyBicm93c2VyIj4KICA8cmVjdCB4PSI1IiB5PSI5IiB3aWR0aD0iNTQiIGhlaWdodD0iNDYiIHJ4PSIxMCIgZmlsbD0iIzBmMTcyYSIvPgogIDxyZWN0IHg9IjUiIHk9IjkiIHdpZHRoPSI1NCIgaGVpZ2h0PSI0NiIgcng9IjEwIiBmaWxsPSJub25lIiBzdHJva2U9IiMzOGJkZjgiIHN0cm9rZS13aWR0aD0iMy41Ii8+CiAgPHBhdGggZD0iTTUgMjNoNTQiIHN0cm9rZT0iIzM4YmRmOCIgc3Ryb2tlLXdpZHRoPSIzLjUiLz4KICA8Y2lyY2xlIGN4PSIxNCIgY3k9IjE2IiByPSIyLjIiIGZpbGw9IiNmNDcyYjYiLz4KICA8Y2lyY2xlIGN4PSIyMS41IiBjeT0iMTYiIHI9IjIuMiIgZmlsbD0iI2ZiYmYyNCIvPgogIDxjaXJjbGUgY3g9IjI5IiBjeT0iMTYiIHI9IjIuMiIgZmlsbD0iIzRhZGU4MCIvPgogIDxwYXRoIGQ9Ik0zMiAyNyBMNDQgMzMgTDM4LjUgMzUuMiBMMzYgNDEgWiIgZmlsbD0iI2Y4ZmFmYyIgc3Ryb2tlPSIjMGYxNzJhIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K",
+      "author": "you",
+      "homepage": "https://github.com/REPLACE-ME/dsh-plugin-ego",
+      "repository": {
+        "url": "https://github.com/REPLACE-ME/dsh-plugin-ego"
+      },
+      "metadata": {
+        "category": "browser",
+        "keywords": [
+          "browser",
+          "automation",
+          "chromium",
+          "ego",
+          "crawler",
+          "download"
+        ],
+        "labels": [],
+        "sortKeys": {}
+      },
+      "versions": [
+        {
+          "version": "0.1.0",
+          "publishTimestamp": 1794890237,
+          "source": {
+            "type": "npm"
+          },
+          "engines": {
+            "dsh": ">=0.2.2-rc.1"
+          }
+        }
+      ]
+    }
+  ]
+}
