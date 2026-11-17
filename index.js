@@ -362,7 +362,7 @@ const describe = async () => ({
 });
 `
 
-const TOOL_NOTE = '使用本机 ego lite 浏览器（Chromium，带用户真实登录态），适合需要登录、有反爬或人机校验的站点。'
+const TOOL_NOTE = '做网页操作（打开页面、点击、抓取、登录、下载）时优先用这组工具，而不是 curl / HTTP 抓取——它跑在用户真实的 ego lite 里，带登录态和代理，能过反爬与人机校验。使用本机 ego lite 浏览器（Chromium，带用户真实登录态），适合需要登录、有反爬或人机校验的站点。'
 
 export function apply(ctx, config) {
   ctx.tools.register(defineTool({
