@@ -7,14 +7,16 @@
 | 项 | 值 |
 | --- | --- |
 | 仓库 | <https://github.com/hbycwzm001/dsh-plugin-ego>（public） |
-| 索引 | <https://gcore.jsdelivr.net/gh/hbycwzm001/dsh-plugin-ego@main/market/index.json> |
-| 备用索引 | <https://fastly.jsdelivr.net/gh/hbycwzm001/dsh-plugin-ego@main/market/index.json>（raw.githubusercontent 国内需代理） |
-| 源类型 | `git`，钉在 `a2d74bc5bae775cff8deaf706b1a31fc580f4276`（= v0.1.0 代码） |
-| 安装 spec | `git+https://github.com/hbycwzm001/dsh-plugin-ego.git#a2d74bc5bae775cff8deaf706b1a31fc580f4276` |
+| 索引（主） | <https://hbycwzm001.github.io/dsh-plugin-ego/market/index.json> ← 用这个 |
+| 索引（备） | <https://gcore.jsdelivr.net/gh/hbycwzm001/dsh-plugin-ego@main/market/index.json> |
+| 源类型 | `git`，钉在 `2e451c53bc16999f5533629c2caec41cb161bebe` |
+| 安装 spec | `git+https://github.com/hbycwzm001/dsh-plugin-ego.git#2e451c53bc16999f5533629c2caec41cb161bebe` |
 
-已实测：`pnpm add <上面的 spec>` 成功（6.4s，`+ dsh-plugin-ego 0.1.0`）；两个 jsDelivr 镜像在**不开代理**时也能直连拿到索引（200 / format=1）。
+实测：三个地址在**不开代理**时都能拿到（`hbycwzm001.github.io` 862ms / `gcore` 770ms / `fastly` 845ms），`format=1`、sha 与仓库一致；`pnpm add <spec>` 6.4s 装成功。
 
-剩下只有一步，**必须你在界面里做**：插件 → 发现 → 添加索引源 → 粘贴上面的索引 URL。
+> jsDelivr 对 `@main` 有缓存，推送后可能仍返回旧内容（purge 接口会节流）。所以主索引放 **GitHub Pages**：`git push` 后约 1 分钟自动重建，URL 不变，加一次长期有效。
+
+剩下只有一步，**必须你在界面里做**：插件 → 发现 → 添加索引源 → 粘贴上面的主索引 URL。
 
 ---
 

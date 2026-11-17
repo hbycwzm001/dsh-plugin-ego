@@ -15,10 +15,12 @@
 **走插件市场**：在「插件 → 发现 → 添加索引源」里粘贴
 
 ```
-https://gcore.jsdelivr.net/gh/hbycwzm001/dsh-plugin-ego@main/market/index.json
+https://hbycwzm001.github.io/dsh-plugin-ego/market/index.json
 ```
 
-（`gcore` / `fastly` 这两个 jsDelivr 镜像国内可直连；`raw.githubusercontent.com` 在国内需要代理。）
+（GitHub Pages 托管，随 `git push` 自动更新，加一次就长期有效。）
+备用镜像：`https://gcore.jsdelivr.net/gh/hbycwzm001/dsh-plugin-ego@main/market/index.json`
+（jsDelivr 对 `@main` 有缓存，刚推完可能还是旧内容；`raw.githubusercontent.com` 在国内需代理。）
 添加完搜 `dsh-plugin-ego` 就能一键装。
 
 ## 工具
