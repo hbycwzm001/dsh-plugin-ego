@@ -53,11 +53,11 @@
       "versions": [
         {
           "version": "0.2.0",
-          "publishTimestamp": 1794892626,
+          "publishTimestamp": 1794892659,
           "source": {
             "type": "git",
             "url": "https://github.com/hbycwzm001/dsh-plugin-ego",
-            "commit": "e3cb4ad9c0a3ce9bc6a369a772216f9b771bd177"
+            "commit": "2d6cf2f7af23c8358f354b9ba31250ce1f4c62a4"
           },
           "engines": {
             "dsh": ">=0.2.2-rc.1"
